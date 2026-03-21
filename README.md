@@ -35,23 +35,30 @@ And a minimal Fetch planner in `agent_service/`:
 - Only explicitly saved models are stored in DB.
 - DB schema stays minimal: `id`, `name`, `object_url`.
 - FastAPI can call the Fetch planner via `FETCH_AGENT_PLAN_URL`; if unavailable, it falls back to local planning.
+- Supabase is supported for both Postgres (`DATABASE_URL`) and buckets (via `SUPABASE_*` env values).
 
 ### Local run
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r api_service/requirements.txt
+uv sync --extra api --extra agent
 cp .env.example .env
-uvicorn api_service.main:app --reload --port 8000
+uv run uvicorn api_service.main:app --reload --port 8000
 ```
 
 Optional planner agent:
 
 ```bash
-pip install -r agent_service/requirements.txt
-python agent_service/main.py
+uv run python agent_service/main.py
 ```
+
+### Fast small-edit loop
+
+1. First generation calls `POST /sandbox/generate` with prompt + sketch.
+2. Response returns `context_token`, `concept_image_url`, and `model_url`.
+3. Small edit calls `POST /sandbox/generate` again with:
+   - updated `sketch_url` and/or `edit_instruction`
+   - previous `context_token`
+4. Backend uses prior concept/model pointers in token as context and routes to edit mode for faster preview-oriented regeneration.
 
 ### Minimal schema SQL
 

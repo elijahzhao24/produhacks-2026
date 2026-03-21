@@ -94,3 +94,9 @@ create table saved_models (
 - Keep one Fetch planner agent (`agent_service/main.py`) with `POST /plan`.
 - FastAPI calls planner for route/constraints.
 - If planner is down, FastAPI falls back to local plan logic.
+
+## Supabase + UV
+
+- Postgres: set `DATABASE_URL` to Supabase Postgres connection string (pooler recommended).
+- Buckets: use `SUPABASE_URL`, `SUPABASE_BUCKET`, `SUPABASE_TMP_PREFIX`, `SUPABASE_SAVED_PREFIX`.
+- Package management: use `uv` with extras from root `pyproject.toml`.
