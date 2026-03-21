@@ -36,6 +36,7 @@ And a minimal Fetch planner in `agent_service/`:
 - DB schema stays minimal: `id`, `name`, `object_url`.
 - FastAPI can call the Fetch planner via `FETCH_AGENT_PLAN_URL`; if unavailable, it falls back to local planning.
 - Supabase is supported for both Postgres (`DATABASE_URL`) and buckets (via `SUPABASE_*` env values).
+- `POST /models/save` now performs a real Supabase Storage copy from `tmp/models/*` to `saved/models/*` when `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_BUCKET` are configured.
 
 ### Local run
 
@@ -50,6 +51,16 @@ Optional planner agent:
 ```bash
 uv run python agent_service/main.py
 ```
+
+### Supabase env required for real save copy
+
+Set these in `.env`:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_BUCKET` (for example `assets`)
+- `SUPABASE_TMP_PREFIX` (default `tmp`)
+- `SUPABASE_SAVED_PREFIX` (default `saved`)
 
 ### Fast small-edit loop
 

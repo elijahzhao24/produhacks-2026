@@ -98,5 +98,6 @@ create table saved_models (
 ## Supabase + UV
 
 - Postgres: set `DATABASE_URL` to Supabase Postgres connection string (pooler recommended).
-- Buckets: use `SUPABASE_URL`, `SUPABASE_BUCKET`, `SUPABASE_TMP_PREFIX`, `SUPABASE_SAVED_PREFIX`.
+- Buckets: use `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_BUCKET`, `SUPABASE_TMP_PREFIX`, `SUPABASE_SAVED_PREFIX`.
+- Save flow: `/models/save` copies object from `tmp/models/*` to `saved/models/*` in the same bucket, then stores the saved public URL in Postgres.
 - Package management: use `uv` with extras from root `pyproject.toml`.

@@ -5,6 +5,10 @@ from typing import Any
 from .config import settings
 
 
+class StoragePersistError(RuntimeError):
+    pass
+
+
 @dataclass
 class GeneratedArtifacts:
     concept_image_url: str
@@ -68,12 +72,59 @@ def generate_sandbox_artifacts() -> GeneratedArtifacts:
 
 def persist_saved_model_url(temp_model_url: str) -> str:
     """
-    Draft behavior: convert tmp model URL to saved URL.
-    In production replace this with a real storage copy/move operation.
+    Persist a sandbox tmp model URL into the saved prefix.
+    If Supabase credentials are configured, this performs a real storage copy.
+    Otherwise it falls back to a URL rewrite for local/mock development.
     """
-    if "/tmp/models/" not in temp_model_url:
+    source_path = _extract_source_path(temp_model_url)
+    if source_path is None:
+        if _supabase_is_configured():
+            raise StoragePersistError(
+                "Model URL does not match expected tmp path format "
+                f"('/{settings.supabase_tmp_prefix}/models/...'): {temp_model_url}"
+            )
         return temp_model_url
 
-    filename = temp_model_url.rsplit("/", maxsplit=1)[-1]
-    base = settings.public_storage_base_url.rstrip("/")
-    return f"{base}/saved/models/{uuid.uuid4()}-{filename}"
+    filename = source_path.rsplit("/", maxsplit=1)[-1]
+    dest_path = f"{settings.supabase_saved_prefix.rstrip('/')}/models/{uuid.uuid4()}-{filename}"
+
+    if not _supabase_is_configured():
+        base = settings.public_storage_base_url.rstrip("/")
+        return f"{base}/{dest_path}"
+
+    try:
+        from supabase import create_client
+    except ImportError as exc:
+        raise StoragePersistError(
+            "Supabase client is not installed. Install API deps with `uv sync --extra api`."
+        ) from exc
+
+    try:
+        client = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        client.storage.from_(settings.supabase_bucket).copy(source_path, dest_path)
+    except Exception as exc:
+        raise StoragePersistError(
+            f"Failed to copy storage object from '{source_path}' to '{dest_path}': {exc}"
+        ) from exc
+
+    return _build_public_object_url(dest_path)
+
+
+def _supabase_is_configured() -> bool:
+    return bool(settings.supabase_url and settings.supabase_service_role_key and settings.supabase_bucket)
+
+
+def _build_public_object_url(path: str) -> str:
+    return (
+        f"{settings.supabase_url.rstrip('/')}/storage/v1/object/public/"
+        f"{settings.supabase_bucket}/{path.lstrip('/')}"
+    )
+
+
+def _extract_source_path(temp_model_url: str) -> str | None:
+    # Typical input looks like .../tmp/models/<id>.glb
+    marker = f"/{settings.supabase_tmp_prefix.strip('/')}/models/"
+    idx = temp_model_url.find(marker)
+    if idx == -1:
+        return None
+    return temp_model_url[idx + 1 :]

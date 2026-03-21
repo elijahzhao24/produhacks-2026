@@ -11,6 +11,7 @@ class Settings:
     public_storage_base_url: str = os.getenv("PUBLIC_STORAGE_BASE_URL", "https://storage.local")
     # Supabase storage settings (optional for local mock mode).
     supabase_url: str = os.getenv("SUPABASE_URL", "")
+    supabase_service_role_key: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     supabase_bucket: str = os.getenv("SUPABASE_BUCKET", "assets")
     supabase_tmp_prefix: str = os.getenv("SUPABASE_TMP_PREFIX", "tmp")
     supabase_saved_prefix: str = os.getenv("SUPABASE_SAVED_PREFIX", "saved")

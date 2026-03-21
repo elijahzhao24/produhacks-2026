@@ -9,7 +9,7 @@ from .agent_planner import get_generation_plan
 from .config import settings
 from .context_token import ContextTokenError, issue_context_token, parse_context_token
 from .database import Base, engine, get_db
-from .generation import generate_sandbox_artifacts, persist_saved_model_url
+from .generation import StoragePersistError, generate_sandbox_artifacts, persist_saved_model_url
 from .models import SavedModel
 from .schemas import (
     ListSavedModelsResponse,
@@ -84,7 +84,10 @@ def save_model(body: SaveModelRequest, db: Session = Depends(get_db)) -> SavedMo
     if not model_url:
         raise HTTPException(status_code=400, detail="No model_url found in context token")
 
-    saved_object_url = persist_saved_model_url(model_url)
+    try:
+        saved_object_url = persist_saved_model_url(model_url)
+    except StoragePersistError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     row = SavedModel(name=body.name, object_url=saved_object_url)
     db.add(row)
