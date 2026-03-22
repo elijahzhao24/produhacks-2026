@@ -1,7 +1,7 @@
-from typing import Any
+import httpx
 from uuid import UUID
-
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -132,10 +132,43 @@ def save_model(body: SaveModelRequest, db: Session = Depends(get_db)) -> SavedMo
     return SavedModelResponse.model_validate(row)
 
 
+@app.get("/models/download")
+async def download_model(url: str, filename: str | None = None):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, follow_redirects=True)
+            response.raise_for_status()
+            
+            if not filename:
+                # Extract from URL, removing query params
+                base_name = url.split("/")[-1].split("?")[0]
+                filename = base_name or "model.glb"
+            
+            if not filename.endswith(".glb"):
+                filename += ".glb"
+                
+            # Use quotes for filename to handle spaces/special chars
+            return Response(
+                content=response.content,
+                media_type="application/force-download",
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+            )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Download proxy failed: {exc}")
+
+
 @app.get("/models", response_model=ListSavedModelsResponse)
-def list_models(db: Session = Depends(get_db)) -> ListSavedModelsResponse:
-    rows = db.execute(select(SavedModel).order_by(SavedModel.name.asc())).scalars().all()
-    return ListSavedModelsResponse(items=[SavedModelResponse.model_validate(row) for row in rows])
+async def list_models(db: Session = Depends(get_db)) -> ListSavedModelsResponse:
+    print("DEBUG: Entered list_models endpoint")
+    try:
+        # Use a simpler query for debugging
+        rows = db.query(SavedModel).all()
+        print(f"DEBUG: Found {len(rows)} models")
+        items = [SavedModelResponse.model_validate(row) for row in rows]
+        return ListSavedModelsResponse(items=items)
+    except Exception as exc:
+        print(f"DEBUG: Error in list_models: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get("/models/{model_id}", response_model=SavedModelResponse)

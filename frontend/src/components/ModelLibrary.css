@@ -75,6 +75,35 @@
     justify-content: center;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.05));
     font-size: 48px;
+    position: relative;
+}
+
+.card-download-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.model-card:hover .card-download-button {
+    opacity: 1;
+}
+
+.card-download-button:hover {
+    background: #fff;
+    transform: scale(1.1);
 }
 
 .model-card-info {

@@ -157,6 +157,41 @@ function App() {
     }
   };
 
+  const handleDownload = async () => {
+    if (!glbUrl) return;
+    const safeName = (prompt || 'model')
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase()
+      .slice(0, 50);
+
+    setStatus('Preparing download...');
+    try {
+      const downloadUrl = `/models/download?url=${encodeURIComponent(glbUrl)}&filename=${encodeURIComponent(safeName)}`;
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const localUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = localUrl;
+      a.setAttribute('download', `${safeName}.glb`);
+      document.body.appendChild(a);
+      a.click();
+
+      // Small delay before cleanup to ensure browser triggers download
+      setTimeout(() => {
+        window.URL.revokeObjectURL(localUrl);
+        document.body.removeChild(a);
+      }, 100);
+
+      setStatus('Download complete!');
+    } catch (err) {
+      console.error('Download error:', err);
+      setStatus(`Download failed: ${err.message}`);
+    }
+  };
+
   const handleClear = () => {
     sketchRef.current.clearCanvas();
     setSelectedSketchObject(null);
@@ -312,9 +347,14 @@ function App() {
               </button>
             )}
             {glbUrl && (
-              <button onClick={handleSave} disabled={isLoading} className="action-pill secondary-action">
-                {isLoading && status.includes('Saving') ? 'Saving...' : 'Save'}
-              </button>
+              <>
+                <button onClick={handleSave} disabled={isLoading} className="action-pill secondary-action">
+                  {isLoading && status.includes('Saving') ? 'Saving...' : 'Save'}
+                </button>
+                <button onClick={handleDownload} className="action-pill secondary-action">
+                  Download
+                </button>
+              </>
             )}
           </div>
           <PromptInput prompt={prompt} setPrompt={setPrompt} />
