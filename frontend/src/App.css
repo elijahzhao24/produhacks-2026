@@ -437,6 +437,38 @@ header {
   font-size: 24px;
 }
 
+.speed-selector {
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.42);
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.dark-theme .speed-selector {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.speed-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.speed-button.active {
+  background: var(--active-glow);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 button {
   font-family: inherit;
 }

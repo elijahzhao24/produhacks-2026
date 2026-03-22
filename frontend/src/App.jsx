@@ -24,6 +24,7 @@ function App() {
   const [selectedSketchObject, setSelectedSketchObject] = useState(null);
   const [isDropTargetActive, setIsDropTargetActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [desiredSpeed, setDesiredSpeed] = useState('fast');
   const sketchRef = useRef();
   const generationPanelRef = useRef(null);
 
@@ -73,7 +74,7 @@ function App() {
         body: JSON.stringify({
           prompt,
           sketch_url: sketchUrl,
-          desired_speed: 'balanced',
+          desired_speed: desiredSpeed,
         }),
       });
 
@@ -109,7 +110,7 @@ function App() {
           prompt,
           sketch_url: sketchUrl,
           context_token: contextToken,
-          desired_speed: 'balanced',
+          desired_speed: desiredSpeed,
         }),
       });
 
@@ -283,6 +284,18 @@ function App() {
             )}
           </div>
           <PromptInput prompt={prompt} setPrompt={setPrompt} />
+          <div className="speed-selector">
+            {['fast', 'balanced', 'best'].map((speed) => (
+              <button
+                key={speed}
+                onClick={() => setDesiredSpeed(speed)}
+                className={`speed-button ${desiredSpeed === speed ? 'active' : ''}`}
+                title={`${speed.charAt(0).toUpperCase() + speed.slice(1)} Speed`}
+              >
+                {speed === 'fast' ? '⚡' : speed === 'balanced' ? '⚖' : '🏆'}
+              </button>
+            ))}
+          </div>
           <button onClick={toggleTheme} className="settings-button" aria-label="Toggle theme">
             {darkMode ? '☀' : '⚙'}
           </button>

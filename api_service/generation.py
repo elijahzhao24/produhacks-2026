@@ -116,44 +116,56 @@ def _generate_with_meshy(
         raise GenerationError("MESHY_API_KEY is required when GENERATION_MODE=real.")
 
     is_edit = bool(previous_context or edit_instruction)
-    constraints = plan.get("constraints") or []
-    concept_prompt = _build_concept_prompt(
-        prompt=prompt,
-        edit_instruction=edit_instruction,
-        constraints=constraints,
-        is_edit=is_edit,
-    )
-
-    prev_concept = (previous_context or {}).get("concept_image_url")
-    reference_images = _dedupe_nonempty([prev_concept if is_edit else None, sketch_url])
-
-    wants_multi_view = len(plan.get("views_needed") or []) > 1
-
-    if reference_images:
-        concept_task_id = _meshy_create_image_to_image_task(
-            prompt=concept_prompt,
-            reference_image_urls=reference_images,
+    
+    # TURBO OPTIMIZATION: Skip concept image step for 'fast' mode if we have a sketch.
+    concept_remote_url = sketch_url
+    if desired_speed == "fast" and sketch_url and not is_edit:
+        model_task_id = _meshy_create_image_to_3d_task(
+            concept_image_url=sketch_url,
             desired_speed=desired_speed,
-            generate_multi_view=wants_multi_view,
         )
-        concept_task = _meshy_wait_for_task("image-to-image", concept_task_id)
+        model_task = _meshy_wait_for_task("image-to-3d", model_task_id)
+        model_remote_url = _extract_glb_url(model_task)
     else:
-        concept_task_id = _meshy_create_text_to_image_task(
-            prompt=concept_prompt,
-            desired_speed=desired_speed,
-            generate_multi_view=wants_multi_view,
+        constraints = plan.get("constraints") or []
+        concept_prompt = _build_concept_prompt(
+            prompt=prompt,
+            edit_instruction=edit_instruction,
+            constraints=constraints,
+            is_edit=is_edit,
         )
-        concept_task = _meshy_wait_for_task("text-to-image", concept_task_id)
 
-    concept_remote_url = _extract_image_url(concept_task)
+        prev_concept = (previous_context or {}).get("concept_image_url")
+        reference_images = _dedupe_nonempty([prev_concept if is_edit else None, sketch_url])
 
-    model_task_id = _meshy_create_image_to_3d_task(
-        concept_image_url=concept_remote_url,
-        desired_speed=desired_speed,
-    )
-    model_task = _meshy_wait_for_task("image-to-3d", model_task_id)
-    model_remote_url = _extract_glb_url(model_task)
+        wants_multi_view = len(plan.get("views_needed") or []) > 1
 
+        if reference_images:
+            concept_task_id = _meshy_create_image_to_image_task(
+                prompt=concept_prompt,
+                reference_image_urls=reference_images,
+                desired_speed=desired_speed,
+                generate_multi_view=wants_multi_view,
+            )
+            concept_task = _meshy_wait_for_task("image-to-image", concept_task_id)
+        else:
+            concept_task_id = _meshy_create_text_to_image_task(
+                prompt=concept_prompt,
+                desired_speed=desired_speed,
+                generate_multi_view=wants_multi_view,
+            )
+            concept_task = _meshy_wait_for_task("text-to-image", concept_task_id)
+
+        concept_remote_url = _extract_image_url(concept_task)
+
+        model_task_id = _meshy_create_image_to_3d_task(
+            concept_image_url=concept_remote_url,
+            desired_speed=desired_speed,
+        )
+        model_task = _meshy_wait_for_task("image-to-3d", model_task_id)
+        model_remote_url = _extract_glb_url(model_task)
+
+    # Download and upload to Supabase (required for CORS and persistence)
     concept_bytes, concept_content_type = _download_bytes(concept_remote_url)
     model_bytes, model_content_type = _download_bytes(model_remote_url)
 

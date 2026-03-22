@@ -21,7 +21,7 @@ class Settings:
     meshy_image_model_best: str = os.getenv("MESHY_IMAGE_MODEL_BEST", "nano-banana-pro")
     meshy_3d_model: str = os.getenv("MESHY_3D_MODEL", "latest")
     meshy_request_timeout_seconds: int = int(os.getenv("MESHY_REQUEST_TIMEOUT_SECONDS", "60"))
-    meshy_poll_interval_seconds: int = int(os.getenv("MESHY_POLL_INTERVAL_SECONDS", "3"))
+    meshy_poll_interval_seconds: int = int(os.getenv("MESHY_POLL_INTERVAL_SECONDS", "2"))
     meshy_task_timeout_seconds: int = int(os.getenv("MESHY_TASK_TIMEOUT_SECONDS", "900"))
     # Supabase storage settings (optional for local mock mode).
     supabase_url: str = os.getenv("SUPABASE_URL", "")
