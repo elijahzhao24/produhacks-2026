@@ -141,10 +141,8 @@ Response:
 
 Response:
 
-```json
-{
-  "id": "uuid",
-  "name": "UFO Duck v1",
-  "object_url": "https://.../saved/models/...glb"
-}
-```
+-fetch AI
+- chat gpt
+- meshyAI
+
+testing pushing
