@@ -4,4 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/upload': 'http://localhost:8000',
+      '/sandbox': 'http://localhost:8000',
+      '/models': 'http://localhost:8000',
+    },
+  },
 })

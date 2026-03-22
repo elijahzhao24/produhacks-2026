@@ -456,3 +456,25 @@ def _extract_source_path(temp_model_url: str) -> str | None:
     if idx == -1:
         return None
     return temp_model_url[idx + 1 :].split("?", maxsplit=1)[0]
+
+
+def upload_sketch_to_supabase(data: bytes, content_type: str) -> str:
+    """
+    Upload a raw sketch image to Supabase Storage and return its public URL.
+    """
+    generation_id = str(uuid.uuid4())
+    extension = "png"
+    if "jpeg" in content_type:
+        extension = "jpg"
+    elif "svg" in content_type:
+        extension = "svg"
+
+    path = f"{settings.supabase_tmp_prefix.strip('/')}/sketches/{generation_id}.{extension}"
+
+    if not _supabase_is_configured():
+        # Fallback for local/mock
+        base = settings.public_storage_base_url.rstrip("/")
+        return f"{base}/{path}"
+
+    _upload_bytes_to_supabase(path=path, data=data, content_type=content_type)
+    return _build_public_object_url(path)

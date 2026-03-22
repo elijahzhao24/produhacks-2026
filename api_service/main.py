@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ from .generation import (
     StoragePersistError,
     generate_sandbox_artifacts,
     persist_saved_model_url,
+    upload_sketch_to_supabase,
 )
 from .models import SavedModel
 from .schemas import (
@@ -22,6 +23,7 @@ from .schemas import (
     SandboxGenerateRequest,
     SandboxGenerateResponse,
     SavedModelResponse,
+    UploadResponse,
 )
 
 app = FastAPI(title=settings.app_name)
@@ -35,6 +37,24 @@ def startup() -> None:
 @app.get("/health")
 def health() -> dict[str, bool]:
     return {"ok": True}
+
+
+@app.post("/upload", response_model=UploadResponse)
+async def upload_sketch(file: UploadFile = File(...)) -> UploadResponse:
+    print(f"DEBUG: Received upload request for {file.filename} ({file.content_type})")
+    content = await file.read()
+    print(f"DEBUG: Content length: {len(content)} bytes")
+    try:
+        url = upload_sketch_to_supabase(content, file.content_type or "image/png")
+        print(f"DEBUG: Uploaded to {url}")
+    except StoragePersistError as exc:
+        print(f"DEBUG: StoragePersistError: {exc}")
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"DEBUG: Unexpected error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return UploadResponse(url=url)
 
 
 @app.post("/sandbox/generate", response_model=SandboxGenerateResponse)

@@ -16,12 +16,14 @@ function App() {
   const [jobId, setJobId] = useState(null);
   const [status, setStatus] = useState(null);
   const [glbUrl, setGlbUrl] = useState(null);
+  const [contextToken, setContextToken] = useState(null);
   const [strokeColor, setStrokeColor] = useState('#1f1f1f');
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [toolMode, setToolMode] = useState('draw');
   const [darkMode, setDarkMode] = useState(false);
   const [selectedSketchObject, setSelectedSketchObject] = useState(null);
   const [isDropTargetActive, setIsDropTargetActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const sketchRef = useRef();
   const generationPanelRef = useRef(null);
 
@@ -29,53 +31,103 @@ function App() {
     document.body.className = darkMode ? 'dark-theme' : '';
   }, [darkMode]);
 
-  const handleGenerate = async () => {
+  const uploadSketch = async () => {
+    console.log('DEBUG: Starting sketch upload...');
     const sketchData = await sketchRef.current.exportImage('png');
-    const formData = new FormData();
-    formData.append('prompt', prompt);
-    formData.append('sketch', sketchData);
-    if (selectedSketchObject) {
-      formData.append('selected_object', JSON.stringify(selectedSketchObject));
-    }
+    console.log('DEBUG: Exported image data length:', sketchData.length);
 
-    const response = await fetch('/api/generate', {
+    // Convert data URL to Blob
+    const res = await fetch(sketchData);
+    const blob = await res.blob();
+    console.log('DEBUG: Blob size:', blob.size);
+
+    const formData = new FormData();
+    formData.append('file', blob, 'sketch.png');
+
+    const response = await fetch('/upload', {
       method: 'POST',
       body: formData,
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('DEBUG: Upload failed with status:', response.status, errorText);
+      throw new Error(`Failed to upload sketch: ${response.status} ${errorText}`);
+    }
+
     const data = await response.json();
-    setJobId(data.job_id);
-    pollStatus(data.job_id);
+    console.log('DEBUG: Upload successful, URL:', data.url);
+    return data.url;
+  };
+
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    setStatus('Uploading sketch...');
+    try {
+      const sketchUrl = await uploadSketch();
+
+      setStatus('Generating 3D model (this may take a few minutes)...');
+      const response = await fetch('/sandbox/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          sketch_url: sketchUrl,
+          desired_speed: 'balanced',
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Generation failed');
+      }
+
+      const data = await response.json();
+      setGlbUrl(data.model_url);
+      setContextToken(data.context_token);
+      setJobId('sandbox'); // Dummy ID to show Edit button
+      setStatus('completed');
+    } catch (err) {
+      console.error(err);
+      setStatus(`Error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEdit = async () => {
-    const sketchData = await sketchRef.current.exportImage('png');
-    const formData = new FormData();
-    formData.append('job_id', jobId);
-    formData.append('prompt', prompt);
-    formData.append('sketch', sketchData);
-    if (selectedSketchObject) {
-      formData.append('selected_object', JSON.stringify(selectedSketchObject));
-    }
+    setIsLoading(true);
+    setStatus('Uploading updated sketch...');
+    try {
+      const sketchUrl = await uploadSketch();
 
-    const response = await fetch('/api/edit', {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await response.json();
-    setJobId(data.job_id);
-    pollStatus(data.job_id);
-  };
+      setStatus('Updating 3D model...');
+      const response = await fetch('/sandbox/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          sketch_url: sketchUrl,
+          context_token: contextToken,
+          desired_speed: 'balanced',
+        }),
+      });
 
-  const pollStatus = (id) => {
-    const interval = setInterval(async () => {
-      const response = await fetch(`/api/status/${id}`);
-      const data = await response.json();
-      setStatus(data.status);
-      if (data.status === 'completed') {
-        setGlbUrl(data.glb_url);
-        clearInterval(interval);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Edit failed');
       }
-    }, 2000);
+
+      const data = await response.json();
+      setGlbUrl(data.model_url);
+      setContextToken(data.context_token);
+      setStatus('completed');
+    } catch (err) {
+      console.error(err);
+      setStatus(`Error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClear = () => {
@@ -95,10 +147,10 @@ function App() {
       <div className="top-section">
         <div className="panel left-panel">
           <h2>Sketch Your Idea</h2>
-          <SketchCanvas 
-            ref={sketchRef} 
-            strokeColor={strokeColor} 
-            strokeWidth={strokeWidth} 
+          <SketchCanvas
+            ref={sketchRef}
+            strokeColor={strokeColor}
+            strokeWidth={strokeWidth}
             toolMode={toolMode}
             dropTargetRef={generationPanelRef}
             onSelectionDrop={(selection) => {
@@ -128,8 +180,14 @@ function App() {
       <div className="bottom-section">
         <PromptInput prompt={prompt} setPrompt={setPrompt} />
         <div className="buttons">
-          <button onClick={handleGenerate} disabled={!prompt}>Generate</button>
-          {jobId && <button onClick={handleEdit} disabled={!prompt}>Edit</button>}
+          <button onClick={handleGenerate} disabled={!prompt || isLoading}>
+            {isLoading && status.includes('Generating') ? 'Generating...' : 'Generate'}
+          </button>
+          {jobId && (
+            <button onClick={handleEdit} disabled={!prompt || isLoading}>
+              {isLoading && status.includes('Updating') ? 'Updating...' : 'Edit'}
+            </button>
+          )}
         </div>
         {status && <p className="status">Status: {status}</p>}
       </div>
@@ -215,12 +273,12 @@ function App() {
 
         <div className="action-row">
           <div className="buttons action-buttons">
-            <button onClick={handleGenerate} disabled={!prompt} className="action-pill primary-action">
-              Generate
+            <button onClick={handleGenerate} disabled={!prompt || isLoading} className="action-pill primary-action">
+              {isLoading && status.includes('Generating') ? 'Generating...' : 'Generate'}
             </button>
             {jobId && (
-              <button onClick={handleEdit} disabled={!prompt} className="action-pill secondary-action">
-                Edit
+              <button onClick={handleEdit} disabled={!prompt || isLoading} className="action-pill secondary-action">
+                {isLoading && status.includes('Updating') ? 'Updating...' : 'Edit'}
               </button>
             )}
           </div>

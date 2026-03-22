@@ -34,3 +34,7 @@ class SavedModelResponse(BaseModel):
 
 class ListSavedModelsResponse(BaseModel):
     items: list[SavedModelResponse]
+
+
+class UploadResponse(BaseModel):
+    url: str

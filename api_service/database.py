@@ -9,11 +9,14 @@ class Base(DeclarativeBase):
 
 
 connect_args = {}
-if settings.database_url.startswith("sqlite"):
+db_url = settings.database_url
+if db_url.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
+elif db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
 
-engine = create_engine(settings.database_url, future=True, connect_args=connect_args)
+engine = create_engine(db_url, future=True, connect_args=connect_args)
 
 
 def get_db() -> Session:
