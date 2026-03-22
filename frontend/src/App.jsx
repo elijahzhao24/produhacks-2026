@@ -279,10 +279,23 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>LeGenesis</h1>
-        <button className="library-toggle" onClick={() => setShowLibrary(true)}>
-          <span className="icon">📚</span> My Library
-        </button>
+        <div className="header-left">
+          <h1>LeGenesis</h1>
+          {status && (
+            <div className={`status-badge ${isLoading ? 'active' : ''}`}>
+              <span className="dot" />
+              {status.replace('completed', 'Ready').replace('Error:', 'Failed')}
+            </div>
+          )}
+        </div>
+        <div className="header-right">
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+            {darkMode ? '☀' : '🌙'}
+          </button>
+          <button className="library-toggle" onClick={() => setShowLibrary(true)}>
+            <span className="icon">📚</span> My Library
+          </button>
+        </div>
       </header>
       <div className="top-section">
         <div className="panel left-panel">
@@ -429,6 +442,10 @@ function App() {
           </div>
         </div>
 
+        <div className="prompt-row">
+          <PromptInput prompt={prompt} setPrompt={setPrompt} />
+        </div>
+
         <div className="action-row">
           <div className="buttons action-buttons">
             <button onClick={handleGenerate} disabled={!prompt || isLoading} className="action-pill primary-action">
@@ -455,10 +472,9 @@ function App() {
               style={{ marginLeft: '8px', whiteSpace: 'nowrap' }}
               title="Auto-refine sketch with AI"
             >
-              {autoRefine ? '✨ Refine: ON' : '✨ Refine: OFF'}
+              {autoRefine ? 'Refine: ON' : 'Refine: OFF'}
             </button>
           </div>
-          <PromptInput prompt={prompt} setPrompt={setPrompt} />
           <div className="speed-selector">
             {['fast', 'balanced', 'best'].map((speed) => (
               <button
@@ -471,9 +487,6 @@ function App() {
               </button>
             ))}
           </div>
-          <button onClick={toggleTheme} className="settings-button" aria-label="Toggle theme">
-            {darkMode ? '☀' : '⚙'}
-          </button>
         </div>
 
         {status && <p className="status">Status: {status}</p>}
