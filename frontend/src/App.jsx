@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { ReactSketchCanvas } from 'react-sketch-canvas';
 import SketchCanvas from './components/SketchCanvas';
 import ModelViewer from './components/ModelViewer';
 import PromptInput from './components/PromptInput';
@@ -28,7 +29,9 @@ function App() {
   const [desiredSpeed, setDesiredSpeed] = useState('fast');
   const [showLibrary, setShowLibrary] = useState(false);
   const [lastGeneratedPrompt, setLastGeneratedPrompt] = useState('');
+  const [uploadedSketchUrl, setUploadedSketchUrl] = useState(null);
   const sketchRef = useRef();
+  const fileInputRef = useRef();
   const generationPanelRef = useRef(null);
   const debounceTimerRef = useRef(null);
 
@@ -60,8 +63,41 @@ function App() {
     }
   }, [prompt]);
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setStatus('Uploading sketch file...');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Failed to upload file');
+      const data = await response.json();
+      setUploadedSketchUrl(data.url);
+      setStatus('Sketch uploaded!');
+      onSketchChange(); // Trigger auto-update
+    } catch (err) {
+      console.error(err);
+      setStatus(`Upload error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const uploadSketch = async () => {
-    console.log('DEBUG: Starting sketch upload...');
+    if (uploadedSketchUrl) {
+      console.log('DEBUG: Using uploaded sketch URL:', uploadedSketchUrl);
+      return uploadedSketchUrl;
+    }
+
+    console.log('DEBUG: Starting sketch export from canvas...');
     const sketchData = await sketchRef.current.exportImage('png');
     console.log('DEBUG: Exported image data length:', sketchData.length);
 
@@ -230,6 +266,7 @@ function App() {
   const handleClear = () => {
     sketchRef.current.clearCanvas();
     setSelectedSketchObject(null);
+    setUploadedSketchUrl(null);
   };
 
   const toggleTheme = () => {
@@ -259,6 +296,7 @@ function App() {
             }}
             onSelectionDragStateChange={setIsDropTargetActive}
             onChange={onSketchChange}
+            backgroundImageUrl={uploadedSketchUrl}
           />
         </div>
         <div ref={generationPanelRef} className={`panel right-panel ${isDropTargetActive ? 'drop-target-active' : ''}`}>
@@ -326,6 +364,22 @@ function App() {
               <span className="tool-icon">×</span>
               <span className="tool-label">Clear</span>
             </button>
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="tool-button"
+              aria-label="Upload sketch"
+              title="Upload"
+            >
+              <span className="tool-icon">📤</span>
+              <span className="tool-label">Upload</span>
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+              accept="image/*"
+            />
           </div>
 
           <div className="color-rail" role="group" aria-label="Color palette">

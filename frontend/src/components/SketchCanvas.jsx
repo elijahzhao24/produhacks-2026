@@ -152,6 +152,7 @@ const SketchCanvas = forwardRef(
       onSelectionDrop,
       onSelectionDragStateChange,
       onChange,
+      backgroundImageUrl,
     },
     ref,
   ) => {
@@ -294,11 +295,29 @@ const SketchCanvas = forwardRef(
 
     return (
       <div ref={wrapperRef} className={`sketch-canvas-shell ${toolMode === 'select' ? 'is-selecting' : ''}`}>
+        {backgroundImageUrl && (
+          <div
+            className="sketch-background"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: `url(${backgroundImageUrl})`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              opacity: 0.5,
+              pointerEvents: 'none'
+            }}
+          />
+        )}
         <ReactSketchCanvas
           ref={ref}
           strokeWidth={strokeWidth}
           strokeColor={strokeColor}
-          canvasColor="white"
+          canvasColor="transparent"
           width="100%"
           height="100%"
           eraserWidth={strokeWidth * 4}
