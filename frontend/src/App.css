@@ -1,6 +1,7 @@
 :root {
   --bg-color: #f8f6f2;
-  --panel-bg: #ffffff;
+  --panel-bg: #f2efe9;
+  --grid-dot: #e0e0e0;
   --panel-muted: rgba(255, 255, 255, 0.9);
   --text-color: #2d2a26;
   --muted-text: #7a756d;
@@ -16,7 +17,8 @@
 
 .dark-theme {
   --bg-color: #1a1a1a;
-  --panel-bg: #242424;
+  --panel-bg: #1c1c1c;
+  --grid-dot: #333333;
   --panel-muted: rgba(36, 36, 36, 0.95);
   --text-color: #e0e0e0;
   --muted-text: #999999;
@@ -221,14 +223,13 @@ header h1 {
   z-index: 1000;
 }
 
-.toolbar-row,
-.prompt-row,
-.action-row {
+.controls-row,
+.prompt-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 24px;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
   background: var(--panel-muted);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow);
@@ -236,23 +237,30 @@ header h1 {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   transition: all 0.3s ease;
   width: 100%;
-  max-width: 860px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
+.controls-row {
+  justify-content: center;
+}
+
+.vertical-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+  margin: 0 4px;
+}
+
 .prompt-row {
-  width: 100%;
-  padding: 8px 16px;
+  max-width: 960px;
+  padding: 4px 12px;
 }
 
 .prompt-row .prompt-input {
   flex: 1;
   background: transparent;
   border: none;
-}
-
-.toolbar-row {
-  justify-content: space-between;
 }
 
 .tool-cluster,
@@ -304,9 +312,9 @@ header h1 {
 .tool-button,
 .size-button,
 .settings-button {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -431,7 +439,7 @@ header h1 {
 }
 
 .tool-icon {
-  font-size: 24px;
+  font-size: 18px;
   line-height: 1;
 }
 
@@ -455,7 +463,8 @@ header h1 {
 .color-segment {
   position: relative;
   flex: 1;
-  height: 64px;
+  height: 36px;
+  width: 36px;
   border: none;
   background: var(--swatch-color);
   cursor: pointer;
@@ -479,9 +488,9 @@ header h1 {
 }
 
 .custom-color-trigger {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -496,10 +505,10 @@ header h1 {
 }
 
 .custom-color-dot {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   border-radius: 999px;
-  border: 3px solid rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
@@ -540,11 +549,15 @@ header h1 {
 }
 
 .action-pill {
-  min-width: 118px;
-  padding: 0 22px;
-  border-radius: 18px;
-  font-size: 15px;
+  min-width: 80px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .primary-action {
@@ -578,9 +591,9 @@ header h1 {
   border: none;
   background: transparent;
   color: var(--text-color);
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.2;
-  padding: 18px 0;
+  padding: 12px 0;
 }
 
 .prompt-input input::placeholder {
@@ -610,13 +623,13 @@ header h1 {
 }
 
 .speed-button {
-  width: 42px;
-  height: 42px;
-  border-radius: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -652,10 +665,34 @@ button:disabled {
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: #ffffff;
-  background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+  background-color: var(--panel-bg);
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
   background-size: 20px 20px;
   border: none;
+}
+
+.resizer-divider {
+  width: 12px;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background 0.2s;
+  z-index: 10;
+}
+
+.resizer-divider:hover,
+.resizer-divider:active {
+  background: var(--border-color);
+}
+
+.resizer-handle {
+  width: 4px;
+  height: 32px;
+  border-radius: 4px;
+  background: var(--muted-text);
+  opacity: 0.5;
 }
 
 .sketch-canvas-shell.is-selecting {
@@ -740,8 +777,7 @@ button:disabled {
     gap: 10px;
   }
 
-  .toolbar-row,
-  .action-row {
+  .controls-row {
     flex-wrap: wrap;
     border-radius: 22px;
     padding: 10px;

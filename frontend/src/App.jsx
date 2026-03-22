@@ -31,6 +31,9 @@ function App() {
   const [lastGeneratedPrompt, setLastGeneratedPrompt] = useState('');
   const [uploadedSketchUrl, setUploadedSketchUrl] = useState(null);
   const [autoRefine, setAutoRefine] = useState(false);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(50);
+  const [isDraggingDivider, setIsDraggingDivider] = useState(false);
+  const topSectionRef = useRef(null);
   const sketchRef = useRef();
   const fileInputRef = useRef();
   const generationPanelRef = useRef(null);
@@ -39,6 +42,36 @@ function App() {
   useEffect(() => {
     document.body.className = darkMode ? 'dark-theme' : '';
   }, [darkMode]);
+
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      if (!isDraggingDivider) return;
+      if (!topSectionRef.current) return;
+      const rect = topSectionRef.current.getBoundingClientRect();
+      const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+      if (newWidth > 15 && newWidth < 85) {
+        setLeftPanelWidth(newWidth);
+      }
+    };
+    const onMouseUp = () => {
+      setIsDraggingDivider(false);
+    };
+
+    if (isDraggingDivider) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [isDraggingDivider]);
 
   const onSketchChange = () => {
     if (debounceTimerRef.current) {
@@ -297,8 +330,8 @@ function App() {
           </button>
         </div>
       </header>
-      <div className="top-section">
-        <div className="panel left-panel">
+      <div className="top-section" ref={topSectionRef}>
+        <div className="panel left-panel" style={{ width: `${leftPanelWidth}%`, flex: 'none' }}>
           <h2>Sketch Your Idea</h2>
           <SketchCanvas
             ref={sketchRef}
@@ -315,7 +348,10 @@ function App() {
             backgroundImageUrl={uploadedSketchUrl}
           />
         </div>
-        <div ref={generationPanelRef} className={`panel right-panel ${isDropTargetActive ? 'drop-target-active' : ''}`}>
+        <div className="resizer-divider" onMouseDown={() => setIsDraggingDivider(true)}>
+          <div className="resizer-handle" />
+        </div>
+        <div ref={generationPanelRef} className={`panel right-panel ${isDropTargetActive ? 'drop-target-active' : ''}`} style={{ flex: 1, overflow: 'hidden' }}>
           <h2>Generated 3D Model</h2>
           {glbUrl ? (
             <ModelViewer glbUrl={glbUrl} />
@@ -347,7 +383,7 @@ function App() {
         {status && <p className="status">Status: {status}</p>}
       </div>
       <div className="floating-controls">
-        <div className="toolbar-row">
+        <div className="controls-row">
           <div className="tool-cluster">
             <button
               onClick={() => setToolMode('draw')}
@@ -356,7 +392,6 @@ function App() {
               title="Pen"
             >
               <span className="tool-icon">✎</span>
-              <span className="tool-label">Pen</span>
             </button>
             <button
               onClick={() => setToolMode('select')}
@@ -365,7 +400,6 @@ function App() {
               title="Select"
             >
               <span className="tool-icon">⬚</span>
-              <span className="tool-label">Select</span>
             </button>
             <button
               onClick={() => setToolMode('erase')}
@@ -374,11 +408,9 @@ function App() {
               title="Eraser"
             >
               <span className="tool-icon">⌫</span>
-              <span className="tool-label">Erase</span>
             </button>
             <button onClick={handleClear} className="tool-button" aria-label="Clear canvas" title="Clear">
               <span className="tool-icon">×</span>
-              <span className="tool-label">Clear</span>
             </button>
             <button
               onClick={() => fileInputRef.current.click()}
@@ -387,7 +419,6 @@ function App() {
               title="Upload"
             >
               <span className="tool-icon">📤</span>
-              <span className="tool-label">Upload</span>
             </button>
             <input
               type="file"
@@ -409,9 +440,10 @@ function App() {
                   setStrokeColor(color);
                 }}
                 aria-label={`Set stroke color to ${color}`}
+                title={color}
               />
             ))}
-            <label className={`custom-color-trigger ${!PALETTE.includes(strokeColor) ? 'active' : ''}`} aria-label="Choose custom color">
+            <label className={`custom-color-trigger ${!PALETTE.includes(strokeColor) ? 'active' : ''}`} aria-label="Choose custom color" title="Custom color">
               <span className="custom-color-dot" style={{ backgroundColor: strokeColor }} />
               <input
                 type="color"
@@ -435,18 +467,28 @@ function App() {
                 }}
                 className={`size-button ${strokeWidth === size.value && toolMode === 'draw' ? 'active' : ''}`}
                 aria-label={`${size.label} pen size`}
+                title={`${size.label} Size`}
               >
                 <span className={`size-dot size-${size.value}`} />
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="prompt-row">
-          <PromptInput prompt={prompt} setPrompt={setPrompt} />
-        </div>
+          <div className="vertical-divider"></div>
 
-        <div className="action-row">
+          <div className="speed-selector">
+            {['fast', 'balanced', 'best'].map((speed) => (
+              <button
+                key={speed}
+                onClick={() => setDesiredSpeed(speed)}
+                className={`speed-button ${desiredSpeed === speed ? 'active' : ''}`}
+                title={`${speed.charAt(0).toUpperCase() + speed.slice(1)} Speed`}
+              >
+                {speed === 'fast' ? '⚡' : speed === 'balanced' ? '⚖' : '🏆'}
+              </button>
+            ))}
+          </div>
+
           <div className="buttons action-buttons">
             <button onClick={handleGenerate} disabled={!prompt || isLoading} className="action-pill primary-action">
               {isLoading && status.includes('Generating') ? 'Generating...' : 'Generate'}
@@ -469,24 +511,16 @@ function App() {
             <button
               onClick={() => setAutoRefine(!autoRefine)}
               className={`action-pill ${autoRefine ? 'primary-action' : 'secondary-action'}`}
-              style={{ marginLeft: '8px', whiteSpace: 'nowrap' }}
+              style={{ marginLeft: '4px', whiteSpace: 'nowrap' }}
               title="Auto-refine sketch with AI"
             >
-              {autoRefine ? 'Refine: ON' : 'Refine: OFF'}
+              {autoRefine ? 'Refine' : 'Refine'}
             </button>
           </div>
-          <div className="speed-selector">
-            {['fast', 'balanced', 'best'].map((speed) => (
-              <button
-                key={speed}
-                onClick={() => setDesiredSpeed(speed)}
-                className={`speed-button ${desiredSpeed === speed ? 'active' : ''}`}
-                title={`${speed.charAt(0).toUpperCase() + speed.slice(1)} Speed`}
-              >
-                {speed === 'fast' ? '⚡' : speed === 'balanced' ? '⚖' : '🏆'}
-              </button>
-            ))}
-          </div>
+        </div>
+
+        <div className="prompt-row">
+          <PromptInput prompt={prompt} setPrompt={setPrompt} />
         </div>
 
         {status && <p className="status">Status: {status}</p>}
