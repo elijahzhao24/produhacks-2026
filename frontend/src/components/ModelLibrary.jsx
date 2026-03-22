@@ -1,6 +1,32 @@
 import { useState, useEffect } from 'react';
 import './ModelLibrary.css';
 
+const fallbackDescription = 'Select to load in the viewer';
+
+function getModelDescription(model) {
+    const candidate = [model.description, model.prompt, model.notes]
+        .find((value) => typeof value === 'string' && value.trim().length > 0);
+
+    if (candidate) {
+        return candidate.trim();
+    }
+
+    if (typeof model.object_url === 'string' && model.object_url.length > 0) {
+        try {
+            const filename = decodeURIComponent(new URL(model.object_url).pathname.split('/').pop() || '')
+                .replace(/\.glb$/i, '')
+                .replace(/^[a-f0-9-]{36}-/i, '');
+            if (filename) {
+                return `File: ${filename}`;
+            }
+        } catch {
+            // URL parse can fail for malformed values; fallback below keeps UI stable.
+        }
+    }
+
+    return fallbackDescription;
+}
+
 function ModelLibrary({ onSelectModel, onClose }) {
     const [models, setModels] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +122,7 @@ function ModelLibrary({ onSelectModel, onClose }) {
                             <div key={model.id} className="model-card" onClick={() => onSelectModel(model.object_url)}>
                                 <div className="model-card-preview">
                                     <span className="model-icon">📦</span>
+                                    <span className="model-title-pill">{model.name || 'Untitled Model'}</span>
                                     <button
                                         className="card-download-button"
                                         onClick={(e) => handleDownload(e, model.object_url, model.name)}
@@ -105,7 +132,8 @@ function ModelLibrary({ onSelectModel, onClose }) {
                                     </button>
                                 </div>
                                 <div className="model-card-info">
-                                    <span className="model-name">{model.name}</span>
+                                    <span className="model-name">{model.name || 'Untitled Model'}</span>
+                                    <span className="model-description">{getModelDescription(model)}</span>
                                 </div>
                             </div>
                         ))}

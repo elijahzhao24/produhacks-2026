@@ -59,6 +59,8 @@
     border-radius: 24px;
     overflow: hidden;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid var(--border-color);
 }
@@ -69,13 +71,37 @@
 }
 
 .model-card-preview {
-    height: 140px;
+    min-height: 128px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.05));
     font-size: 48px;
     position: relative;
+}
+
+.model-icon {
+    font-size: 46px;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.12));
+}
+
+.model-title-pill {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #221f1a;
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(4px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .card-download-button {
@@ -107,19 +133,46 @@
 }
 
 .model-card-info {
-    padding: 16px;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.3);
+    padding: 14px 16px 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.45));
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 64px;
 }
 
 .model-name {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
+    line-height: 1.3;
     color: var(--text-color);
+    display: block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
+}
+
+.model-description {
+    color: var(--muted-text);
+    font-size: 12px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.dark-theme .model-card-info {
+    background: linear-gradient(180deg, rgba(23, 23, 23, 0.92), rgba(29, 29, 29, 0.78));
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-theme .model-title-pill {
+    color: #f2ede6;
+    background: rgba(24, 24, 24, 0.82);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .library-loading,

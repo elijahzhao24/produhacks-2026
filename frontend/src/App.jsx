@@ -33,6 +33,10 @@ function App() {
   const [autoRefine, setAutoRefine] = useState(false);
   const [leftPanelWidth, setLeftPanelWidth] = useState(50);
   const [isDraggingDivider, setIsDraggingDivider] = useState(false);
+  const [isControlDockHovered, setIsControlDockHovered] = useState(false);
+  const [isControlDockFocused, setIsControlDockFocused] = useState(false);
+  const [isPointerNearDock, setIsPointerNearDock] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const topSectionRef = useRef(null);
   const sketchRef = useRef();
   const fileInputRef = useRef();
@@ -72,6 +76,34 @@ function App() {
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, [isDraggingDivider]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(hover: none), (pointer: coarse)');
+    const updateTouchMode = () => setIsTouchDevice(mediaQuery.matches);
+    updateTouchMode();
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateTouchMode);
+    } else {
+      mediaQuery.addListener(updateTouchMode);
+    }
+
+    const handleMouseMove = (event) => {
+      const distanceFromBottom = window.innerHeight - event.clientY;
+      setIsPointerNearDock(distanceFromBottom <= 170);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (typeof mediaQuery.removeEventListener === 'function') {
+        mediaQuery.removeEventListener('change', updateTouchMode);
+      } else {
+        mediaQuery.removeListener(updateTouchMode);
+      }
+    };
+  }, []);
 
   const onSketchChange = () => {
     if (debounceTimerRef.current) {
@@ -309,6 +341,8 @@ function App() {
     setDarkMode(!darkMode);
   };
 
+  const isControlDockVisible = isTouchDevice || isPointerNearDock || isControlDockHovered || isControlDockFocused;
+
   return (
     <div className="app">
       <header>
@@ -382,7 +416,17 @@ function App() {
         </div>
         {status && <p className="status">Status: {status}</p>}
       </div>
-      <div className="floating-controls">
+      <div
+        className={`floating-controls ${isControlDockVisible ? 'is-visible' : 'is-hidden'}`}
+        onMouseEnter={() => setIsControlDockHovered(true)}
+        onMouseLeave={() => setIsControlDockHovered(false)}
+        onFocusCapture={() => setIsControlDockFocused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) {
+            setIsControlDockFocused(false);
+          }
+        }}
+      >
         <div className="controls-row">
           <div className="tool-cluster">
             <button
