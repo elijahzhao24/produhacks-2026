@@ -9,7 +9,12 @@ from .agent_planner import get_generation_plan
 from .config import settings
 from .context_token import ContextTokenError, issue_context_token, parse_context_token
 from .database import Base, engine, get_db
-from .generation import StoragePersistError, generate_sandbox_artifacts, persist_saved_model_url
+from .generation import (
+    GenerationError,
+    StoragePersistError,
+    generate_sandbox_artifacts,
+    persist_saved_model_url,
+)
 from .models import SavedModel
 from .schemas import (
     ListSavedModelsResponse,
@@ -48,7 +53,17 @@ def sandbox_generate(body: SandboxGenerateRequest) -> SandboxGenerateResponse:
         edit_instruction=body.edit_instruction,
         is_edit=bool(prev_context or body.edit_instruction),
     )
-    artifacts = generate_sandbox_artifacts()
+    try:
+        artifacts = generate_sandbox_artifacts(
+            prompt=body.prompt,
+            sketch_url=body.sketch_url,
+            edit_instruction=body.edit_instruction,
+            desired_speed=body.desired_speed,
+            plan=plan,
+            previous_context=prev_context,
+        )
+    except (GenerationError, StoragePersistError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     new_context = {
         "prompt": body.prompt,

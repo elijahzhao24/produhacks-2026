@@ -37,6 +37,7 @@ And a minimal Fetch planner in `agent_service/`:
 - FastAPI can call the Fetch planner via `FETCH_AGENT_PLAN_URL`; if unavailable, it falls back to local planning.
 - Supabase is supported for both Postgres (`DATABASE_URL`) and buckets (via `SUPABASE_*` env values).
 - `POST /models/save` now performs a real Supabase Storage copy from `tmp/models/*` to `saved/models/*` when `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_BUCKET` are configured.
+- `POST /sandbox/generate` now runs a real Meshy pipeline: concept image (text-to-image or image-to-image) -> image-to-3d -> upload both outputs to Supabase `tmp/*`.
 
 ### Local run
 
@@ -61,6 +62,29 @@ Set these in `.env`:
 - `SUPABASE_BUCKET` (for example `assets`)
 - `SUPABASE_TMP_PREFIX` (default `tmp`)
 - `SUPABASE_SAVED_PREFIX` (default `saved`)
+
+### Generation env required for real sandbox generation
+
+Set these in `.env`:
+
+- `GENERATION_MODE=real`
+- `GENERATION_PROVIDER=meshy`
+- `MESHY_API_KEY`
+- `MESHY_BASE_URL` (default `https://api.meshy.ai/openapi/v1`)
+- `MESHY_IMAGE_MODEL_FAST` (default `nano-banana`)
+- `MESHY_IMAGE_MODEL_BALANCED` (default `nano-banana`)
+- `MESHY_IMAGE_MODEL_BEST` (default `nano-banana-pro`)
+- `MESHY_3D_MODEL` (default `latest`)
+- `MESHY_REQUEST_TIMEOUT_SECONDS` (default `60`)
+- `MESHY_POLL_INTERVAL_SECONDS` (default `3`)
+- `MESHY_TASK_TIMEOUT_SECONDS` (default `900`)
+
+### Fetch planner env (if running `agent_service`)
+
+- `FETCH_AGENT_NAME` (default `sketch2mesh_orchestrator`)
+- `FETCH_AGENT_SEED`
+- `FETCH_AGENT_PORT` (default `8001`)
+- `FETCH_AGENT_ENDPOINT` (default `http://127.0.0.1:8001/submit`)
 
 ### Fast small-edit loop
 

@@ -101,3 +101,11 @@ create table saved_models (
 - Buckets: use `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_BUCKET`, `SUPABASE_TMP_PREFIX`, `SUPABASE_SAVED_PREFIX`.
 - Save flow: `/models/save` copies object from `tmp/models/*` to `saved/models/*` in the same bucket, then stores the saved public URL in Postgres.
 - Package management: use `uv` with extras from root `pyproject.toml`.
+
+## Real generation implementation
+
+- `/sandbox/generate` uses Meshy APIs:
+  - text-to-image or image-to-image to produce concept image
+  - image-to-3d to produce GLB
+- Generated concept image + GLB are downloaded and uploaded to Supabase `tmp/*`.
+- Returned `context_token` stores latest and previous concept/model URLs for fast edit iterations.
