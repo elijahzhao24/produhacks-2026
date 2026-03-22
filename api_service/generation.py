@@ -76,6 +76,7 @@ def generate_sandbox_artifacts(
     desired_speed: str,
     plan: dict[str, Any],
     previous_context: dict[str, Any] | None,
+    auto_refine: bool = False,
 ) -> GeneratedArtifacts:
     if settings.generation_mode == "mock":
         return _generate_mock_artifacts()
@@ -91,6 +92,7 @@ def generate_sandbox_artifacts(
         desired_speed=desired_speed,
         plan=plan,
         previous_context=previous_context,
+        auto_refine=auto_refine,
     )
 
 
@@ -111,6 +113,7 @@ def _generate_with_meshy(
     desired_speed: str,
     plan: dict[str, Any],
     previous_context: dict[str, Any] | None,
+    auto_refine: bool = False,
 ) -> GeneratedArtifacts:
     if not settings.meshy_api_key:
         raise GenerationError("MESHY_API_KEY is required when GENERATION_MODE=real.")
@@ -119,7 +122,7 @@ def _generate_with_meshy(
     
     # TURBO OPTIMIZATION: Skip concept image step for 'fast' mode if we have a sketch.
     concept_remote_url = sketch_url
-    if desired_speed == "fast" and sketch_url and not is_edit:
+    if desired_speed == "fast" and sketch_url and not is_edit and not auto_refine:
         model_task_id = _meshy_create_image_to_3d_task(
             concept_image_url=sketch_url,
             desired_speed=desired_speed,
@@ -133,6 +136,7 @@ def _generate_with_meshy(
             edit_instruction=edit_instruction,
             constraints=constraints,
             is_edit=is_edit,
+            auto_refine=auto_refine,
         )
 
         prev_concept = (previous_context or {}).get("concept_image_url")
@@ -201,15 +205,18 @@ def _build_concept_prompt(
     edit_instruction: str | None,
     constraints: list[str],
     is_edit: bool,
+    auto_refine: bool = False,
 ) -> str:
     rule_text = ", ".join(constraints)
+    refine_text = "highly detailed, professional 3D concept art, intricate textures, masterpiece" if auto_refine else ""
+    
     if is_edit:
         edit_text = edit_instruction or "apply only subtle changes while preserving identity"
         return (
-            f"{prompt}. Edit instruction: {edit_text}. Keep this as the same object and preserve identity. "
+            f"{prompt}. {refine_text}. Edit instruction: {edit_text}. Keep this as the same object and preserve identity. "
             f"Constraints: {rule_text}."
         )
-    return f"{prompt}. Constraints: {rule_text}."
+    return f"{prompt}. {refine_text}. Constraints: {rule_text}."
 
 
 def _meshy_create_text_to_image_task(*, prompt: str, desired_speed: str, generate_multi_view: bool) -> str:

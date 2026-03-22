@@ -10,6 +10,7 @@ class SandboxGenerateRequest(BaseModel):
     context_token: str | None = None
     edit_instruction: str | None = Field(default=None, max_length=400)
     desired_speed: Literal["fast", "balanced", "best"] = "balanced"
+    auto_refine: bool = False
 
 
 class SandboxGenerateResponse(BaseModel):

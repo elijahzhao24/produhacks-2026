@@ -30,6 +30,7 @@ function App() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [lastGeneratedPrompt, setLastGeneratedPrompt] = useState('');
   const [uploadedSketchUrl, setUploadedSketchUrl] = useState(null);
+  const [autoRefine, setAutoRefine] = useState(false);
   const sketchRef = useRef();
   const fileInputRef = useRef();
   const generationPanelRef = useRef(null);
@@ -139,6 +140,7 @@ function App() {
           prompt,
           sketch_url: sketchUrl,
           desired_speed: desiredSpeed,
+          auto_refine: autoRefine,
         }),
       });
 
@@ -176,6 +178,7 @@ function App() {
           sketch_url: sketchUrl,
           context_token: contextToken,
           desired_speed: desiredSpeed,
+          auto_refine: autoRefine,
         }),
       });
 
@@ -446,6 +449,14 @@ function App() {
                 </button>
               </>
             )}
+            <button
+              onClick={() => setAutoRefine(!autoRefine)}
+              className={`action-pill ${autoRefine ? 'primary-action' : 'secondary-action'}`}
+              style={{ marginLeft: '8px', whiteSpace: 'nowrap' }}
+              title="Auto-refine sketch with AI"
+            >
+              {autoRefine ? '✨ Refine: ON' : '✨ Refine: OFF'}
+            </button>
           </div>
           <PromptInput prompt={prompt} setPrompt={setPrompt} />
           <div className="speed-selector">

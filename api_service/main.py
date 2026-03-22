@@ -81,6 +81,7 @@ def sandbox_generate(body: SandboxGenerateRequest) -> SandboxGenerateResponse:
             desired_speed=body.desired_speed,
             plan=plan,
             previous_context=prev_context,
+            auto_refine=body.auto_refine,
         )
     except (GenerationError, StoragePersistError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
