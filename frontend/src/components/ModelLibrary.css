@@ -1,0 +1,103 @@
+.model-library-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.model-library-content {
+    background: var(--panel-bg);
+    width: min(800px, 100%);
+    max-height: 80vh;
+    border-radius: 32px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.library-header {
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.library-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--text-color);
+}
+
+.close-button {
+    background: transparent;
+    border: none;
+    font-size: 32px;
+    color: var(--muted-text);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.model-grid {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 32px;
+}
+
+.model-card {
+    background: var(--panel-muted);
+    border-radius: 24px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+
+.model-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--soft-shadow);
+}
+
+.model-card-preview {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.05));
+    font-size: 48px;
+}
+
+.model-card-info {
+    padding: 16px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.model-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.library-loading,
+.library-error,
+.library-empty {
+    padding: 64px;
+    text-align: center;
+    color: var(--muted-text);
+    font-size: 18px;
+}

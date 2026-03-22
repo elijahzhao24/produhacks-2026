@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import SketchCanvas from './components/SketchCanvas';
 import ModelViewer from './components/ModelViewer';
 import PromptInput from './components/PromptInput';
+import ModelLibrary from './components/ModelLibrary';
 import './App.css';
 
 const PALETTE = ['#ffd147', '#ff5a36', '#2166c3', '#1f1f1f'];
@@ -25,6 +26,7 @@ function App() {
   const [isDropTargetActive, setIsDropTargetActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [desiredSpeed, setDesiredSpeed] = useState('fast');
+  const [showLibrary, setShowLibrary] = useState(false);
   const sketchRef = useRef();
   const generationPanelRef = useRef(null);
 
@@ -131,6 +133,30 @@ function App() {
     }
   };
 
+  const handleSave = async () => {
+    if (!contextToken) return;
+    const name = prompt || 'Untitled Model';
+    setIsLoading(true);
+    setStatus('Saving to library...');
+    try {
+      const response = await fetch('/models/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          context_token: contextToken,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to save model');
+      setStatus('Saved to library!');
+    } catch (err) {
+      console.error(err);
+      setStatus(`Error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleClear = () => {
     sketchRef.current.clearCanvas();
     setSelectedSketchObject(null);
@@ -144,6 +170,9 @@ function App() {
     <div className="app">
       <header>
         <h1>Sketch2Mesh</h1>
+        <button className="library-toggle" onClick={() => setShowLibrary(true)}>
+          <span className="icon">📚</span> My Library
+        </button>
       </header>
       <div className="top-section">
         <div className="panel left-panel">
@@ -282,6 +311,11 @@ function App() {
                 {isLoading && status.includes('Updating') ? 'Updating...' : 'Edit'}
               </button>
             )}
+            {glbUrl && (
+              <button onClick={handleSave} disabled={isLoading} className="action-pill secondary-action">
+                {isLoading && status.includes('Saving') ? 'Saving...' : 'Save'}
+              </button>
+            )}
           </div>
           <PromptInput prompt={prompt} setPrompt={setPrompt} />
           <div className="speed-selector">
@@ -303,6 +337,16 @@ function App() {
 
         {status && <p className="status">Status: {status}</p>}
       </div>
+
+      {showLibrary && (
+        <ModelLibrary
+          onSelectModel={(url) => {
+            setGlbUrl(url);
+            setShowLibrary(false);
+          }}
+          onClose={() => setShowLibrary(false)}
+        />
+      )}
     </div>
   );
 }
