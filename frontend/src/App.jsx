@@ -162,8 +162,12 @@ function App() {
   };
 
   const handleSave = async () => {
-    if (!contextToken) return;
+    if (!contextToken) {
+      console.warn('DEBUG: Cannot save, contextToken is null');
+      return;
+    }
     const name = prompt || 'Untitled Model';
+    console.log('DEBUG: Saving model with name:', name, 'and token:', contextToken.slice(0, 20) + '...');
     setIsLoading(true);
     setStatus('Saving to library...');
     try {
@@ -175,10 +179,13 @@ function App() {
           context_token: contextToken,
         }),
       });
-      if (!response.ok) throw new Error('Failed to save model');
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || 'Failed to save model');
+      }
       setStatus('Saved to library!');
     } catch (err) {
-      console.error(err);
+      console.error('DEBUG: Save error:', err);
       setStatus(`Error: ${err.message}`);
     } finally {
       setIsLoading(false);

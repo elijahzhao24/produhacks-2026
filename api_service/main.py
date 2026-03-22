@@ -112,11 +112,14 @@ def sandbox_generate(body: SandboxGenerateRequest) -> SandboxGenerateResponse:
 def save_model(body: SaveModelRequest, db: Session = Depends(get_db)) -> SavedModelResponse:
     try:
         context = parse_context_token(body.context_token, secret=settings.token_secret)
+        print(f"DEBUG: Parsed context token for save. Model URL: {context.get('model_url')}")
     except ContextTokenError as exc:
+        print(f"DEBUG: Context token parsing failed: {exc}")
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     model_url = context.get("model_url")
     if not model_url:
+        print("DEBUG: No model_url found in context token")
         raise HTTPException(status_code=400, detail="No model_url found in context token")
 
     try:

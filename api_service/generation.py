@@ -393,12 +393,15 @@ def persist_saved_model_url(temp_model_url: str) -> str:
     Otherwise it falls back to a URL rewrite for local/mock development.
     """
     source_path = _extract_source_path(temp_model_url)
+    print(f"DEBUG: Persisting model URL: {temp_model_url}. Extracted source path: {source_path}")
     if source_path is None:
         if _supabase_is_configured():
+            print("DEBUG: Supabase is configured but source path is None. Failing.")
             raise StoragePersistError(
                 "Model URL does not match expected tmp path format "
                 f"('/{settings.supabase_tmp_prefix}/models/...'): {temp_model_url}"
             )
+        print("DEBUG: Supabase not configured and source path is None. Returning original URL.")
         return temp_model_url
 
     filename = source_path.rsplit("/", maxsplit=1)[-1]
