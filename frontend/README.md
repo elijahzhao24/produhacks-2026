@@ -1,4 +1,4 @@
-# Frontend for Sketch2Mesh
+# Frontend for LeGenesis
 
 This is the React frontend for the 3D generation pipeline.
 

@@ -7,7 +7,7 @@ load_dotenv()
 
 @dataclass(frozen=True)
 class Settings:
-    app_name: str = os.getenv("APP_NAME", "Sketch2Mesh Minimal API")
+    app_name: str = os.getenv("APP_NAME", "LeGenesis Minimal API")
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./app.db")
     token_secret: str = os.getenv("CONTEXT_TOKEN_SECRET", "change-me-in-prod")
     token_ttl_seconds: int = int(os.getenv("CONTEXT_TOKEN_TTL_SECONDS", "86400"))

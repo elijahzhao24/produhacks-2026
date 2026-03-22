@@ -1,4 +1,4 @@
-# CONTEXT.md — Minimal Fetch.ai + FastAPI 3D Generation Pipeline
+# CONTEXT.md — Minimal Fetch.ai + FastAPI LeGenesis 3D Generation Pipeline
 
 ## Goal
 

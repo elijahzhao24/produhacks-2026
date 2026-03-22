@@ -27,12 +27,38 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [desiredSpeed, setDesiredSpeed] = useState('fast');
   const [showLibrary, setShowLibrary] = useState(false);
+  const [lastGeneratedPrompt, setLastGeneratedPrompt] = useState('');
   const sketchRef = useRef();
   const generationPanelRef = useRef(null);
+  const debounceTimerRef = useRef(null);
 
   useEffect(() => {
     document.body.className = darkMode ? 'dark-theme' : '';
   }, [darkMode]);
+
+  const onSketchChange = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      if (prompt) {
+        // Smart logic: if prompt changed radically, start fresh. 
+        // Otherwise, refine the existing model.
+        if (jobId && prompt === lastGeneratedPrompt) {
+          handleEdit();
+        } else {
+          handleGenerate();
+        }
+      }
+    }, 2000); // 2 second debounce for better responsiveness
+  };
+
+  // Trigger auto-update when prompt changes
+  useEffect(() => {
+    if (prompt && prompt !== lastGeneratedPrompt) {
+      onSketchChange();
+    }
+  }, [prompt]);
 
   const uploadSketch = async () => {
     console.log('DEBUG: Starting sketch upload...');
@@ -88,6 +114,7 @@ function App() {
       const data = await response.json();
       setGlbUrl(data.model_url);
       setContextToken(data.context_token);
+      setLastGeneratedPrompt(prompt);
       setJobId('sandbox'); // Dummy ID to show Edit button
       setStatus('completed');
     } catch (err) {
@@ -124,6 +151,7 @@ function App() {
       const data = await response.json();
       setGlbUrl(data.model_url);
       setContextToken(data.context_token);
+      setLastGeneratedPrompt(prompt);
       setStatus('completed');
     } catch (err) {
       console.error(err);
@@ -204,7 +232,7 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>Sketch2Mesh</h1>
+        <h1>LeGenesis</h1>
         <button className="library-toggle" onClick={() => setShowLibrary(true)}>
           <span className="icon">📚</span> My Library
         </button>
@@ -223,6 +251,7 @@ function App() {
               setIsDropTargetActive(false);
             }}
             onSelectionDragStateChange={setIsDropTargetActive}
+            onChange={onSketchChange}
           />
         </div>
         <div ref={generationPanelRef} className={`panel right-panel ${isDropTargetActive ? 'drop-target-active' : ''}`}>

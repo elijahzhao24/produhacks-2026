@@ -1,7 +1,7 @@
 [project]
 name = "produhacks-2026"
 version = "0.1.0"
-description = "Minimal Sketch2Mesh backend"
+description = "Minimal LeGenesis backend"
 requires-python = ">=3.11"
 dependencies = []
 

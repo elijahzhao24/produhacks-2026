@@ -151,6 +151,7 @@ const SketchCanvas = forwardRef(
       dropTargetRef,
       onSelectionDrop,
       onSelectionDragStateChange,
+      onChange,
     },
     ref,
   ) => {
@@ -190,14 +191,14 @@ const SketchCanvas = forwardRef(
 
         const isOverDropTarget = dropRect
           ? rectsIntersect(
-              {
-                left: event.clientX - dragState.grabOffsetX,
-                top: event.clientY - dragState.grabOffsetY,
-                right: event.clientX - dragState.grabOffsetX + dragState.bounds.width,
-                bottom: event.clientY - dragState.grabOffsetY + dragState.bounds.height,
-              },
-              dropRect,
-            )
+            {
+              left: event.clientX - dragState.grabOffsetX,
+              top: event.clientY - dragState.grabOffsetY,
+              right: event.clientX - dragState.grabOffsetX + dragState.bounds.width,
+              bottom: event.clientY - dragState.grabOffsetY + dragState.bounds.height,
+            },
+            dropRect,
+          )
           : false;
 
         onSelectionDragStateChange?.(isOverDropTarget);
@@ -212,11 +213,11 @@ const SketchCanvas = forwardRef(
         setDragState((current) =>
           current
             ? {
-                ...current,
-                pointerX: event.clientX,
-                pointerY: event.clientY,
-                isOverDropTarget,
-              }
+              ...current,
+              pointerX: event.clientX,
+              pointerY: event.clientY,
+              isOverDropTarget,
+            }
             : current,
         );
       };
@@ -284,11 +285,11 @@ const SketchCanvas = forwardRef(
     const dragGhostStyle =
       dragState && selectedObject
         ? {
-            left: dragState.pointerX - dragState.grabOffsetX,
-            top: dragState.pointerY - dragState.grabOffsetY,
-            width: selectedObject.bounds.width,
-            height: selectedObject.bounds.height,
-          }
+          left: dragState.pointerX - dragState.grabOffsetX,
+          top: dragState.pointerY - dragState.grabOffsetY,
+          width: selectedObject.bounds.width,
+          height: selectedObject.bounds.height,
+        }
         : null;
 
     return (
@@ -301,7 +302,11 @@ const SketchCanvas = forwardRef(
           width="100%"
           height="100%"
           eraserWidth={strokeWidth * 4}
-          onChange={setPaths}
+          onChange={(newPaths) => {
+            setPaths(newPaths);
+            onChange?.(newPaths);
+            onSelectionDragStateChange?.(false); // Reset drag state on change
+          }}
         />
 
         {toolMode === 'select' && (

@@ -1,6 +1,6 @@
 # Features Implementation Plan
 
-This document outlines the proposed features to enhance the Sketch2Mesh platform and their technical implementation details.
+This document outlines the proposed features to enhance the LeGenesis platform and their technical implementation details.
 
 ## 1. Model Library & Gallery 📚
 **Goal**: Allow users to view and manage their previously generated 3D models.
